@@ -37,7 +37,7 @@ npm run install:all
 
 ```env
 PORT=5000
-MONGODB_URI=mongodb://127.0.0.1:27017/torchlabs_crm
+MONGODB_URI=mongodb+srv://CustomerRelationshipManagemntSystem:Customer123@cluster0.bbdscfh.mongodb.net/?appName=Cluster0
 JWT_SECRET=replace-with-a-long-random-secret
 CLIENT_URL=http://localhost:5173
 ```
