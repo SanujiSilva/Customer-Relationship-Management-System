@@ -201,6 +201,11 @@ export function App() {
             <span>Lead Command Center</span>
           </div>
         </div>
+        <div className="sidebar-insight">
+          <span>Today</span>
+          <strong>{summary?.totalLeads || 0} leads tracked</strong>
+          <small>{formatCurrency(summary?.totalDealValue || 0)} pipeline</small>
+        </div>
 
         <nav className="side-nav" aria-label="Primary navigation">
           <button className={view === 'dashboard' ? 'active' : ''} onClick={() => setView('dashboard')}>
@@ -321,7 +326,7 @@ function LoginScreen({ onLogin }) {
         <div className="pipeline-preview">
           <div>
             <span>Pipeline value</span>
-            <strong>$54,500</strong>
+            <strong>{formatCurrency(5450000)}</strong>
           </div>
           <div className="mini-bars">
             <i />
@@ -339,31 +344,51 @@ function LoginScreen({ onLogin }) {
 
       <section className="login-panel">
         <form onSubmit={submit} className="auth-card">
+          <div className="auth-topline">
+            <div className="auth-icon">
+              <UserRound size={22} />
+            </div>
+            <div>
+              <span>Sales Workspace</span>
+              <strong>Secure team access</strong>
+            </div>
+          </div>
           <span className="eyebrow">Secure Access</span>
-          <h2>Welcome back</h2>
-          <label>
-            Email
-            <input
-              type="email"
-              value={form.email}
-              onChange={(event) => setForm({ ...form, email: event.target.value })}
-              required
-            />
+          <h2>Sign in to CRM</h2>
+          <p className="auth-subtitle">Use the demo credentials to open the lead management dashboard.</p>
+          <label className="input-shell">
+            <span>Email</span>
+            <div>
+              <Mail size={18} />
+              <input
+                type="email"
+                value={form.email}
+                onChange={(event) => setForm({ ...form, email: event.target.value })}
+                required
+              />
+            </div>
           </label>
-          <label>
-            Password
-            <input
-              type="password"
-              value={form.password}
-              onChange={(event) => setForm({ ...form, password: event.target.value })}
-              required
-            />
+          <label className="input-shell">
+            <span>Password</span>
+            <div>
+              <UserRound size={18} />
+              <input
+                type="password"
+                value={form.password}
+                onChange={(event) => setForm({ ...form, password: event.target.value })}
+                required
+              />
+            </div>
           </label>
           {error && <p className="form-error">{error}</p>}
           <button className="primary-button wide" disabled={loading}>
             {loading ? 'Signing in...' : 'Login'}
           </button>
-          <p className="credential-hint">Test user: admin@example.com / password123</p>
+          <div className="credential-box">
+            <span>Demo login</span>
+            <strong>admin@example.com</strong>
+            <small>password123</small>
+          </div>
         </form>
       </section>
     </main>
@@ -388,6 +413,21 @@ function Dashboard({ summary, leads, loading, onLeadOpen }) {
 
   return (
     <section className="dashboard-view">
+      <div className="dashboard-hero">
+        <div>
+          <span className="eyebrow">Revenue Command</span>
+          <h2>{formatCurrency(summary?.totalDealValue)} in active pipeline</h2>
+          <p>
+            Track lead movement, prioritize high-value opportunities, and keep follow-up context close to every deal.
+          </p>
+        </div>
+        <div className="hero-stats">
+          <span>Won value</span>
+          <strong>{formatCurrency(summary?.wonDealValue)}</strong>
+          <small>{summary?.wonLeads || 0} closed deals</small>
+        </div>
+      </div>
+
       <div className="metrics-grid">
         {metrics.map(([label, value, Icon]) => (
           <article className="metric-card" key={label}>
@@ -459,29 +499,72 @@ function LeadList({
   onDelete,
   onStatusChange
 }) {
+  const activeFilters = [filters.status, filters.source, filters.assignedSalesperson].filter(Boolean).length;
+  const visibleValue = leads.reduce((total, lead) => total + Number(lead.dealValue || 0), 0);
+  const stageCounts = options.statuses.map((status) => ({
+    status,
+    count: leads.filter((lead) => lead.status === status).length
+  }));
+
   return (
     <section className="leads-view">
-      <div className="filters-bar">
-        <div className="searchbox">
-          <Search size={18} />
-          <input
-            placeholder="Search leads, companies, emails"
-            value={filters.search}
-            onChange={(event) => onFilterChange({ ...filters, search: event.target.value })}
-          />
+      <div className="lead-hero">
+        <div>
+          <span className="eyebrow">Lead Workspace</span>
+          <h2>Manage every opportunity from first touch to close.</h2>
+          <p>Search, filter, update status, and open lead records without losing the sales context.</p>
         </div>
-        <SelectFilter icon={Filter} value={filters.status} onChange={(status) => onFilterChange({ ...filters, status })}>
-          <option value="">All statuses</option>
-          {options.statuses.map((status) => <option key={status}>{status}</option>)}
-        </SelectFilter>
-        <SelectFilter value={filters.source} onChange={(source) => onFilterChange({ ...filters, source })}>
-          <option value="">All sources</option>
-          {options.sources.map((source) => <option key={source}>{source}</option>)}
-        </SelectFilter>
-        <SelectFilter value={filters.assignedSalesperson} onChange={(assignedSalesperson) => onFilterChange({ ...filters, assignedSalesperson })}>
-          <option value="">All owners</option>
-          {salespeople.map((person) => <option key={person}>{person}</option>)}
-        </SelectFilter>
+        <div className="lead-hero-stats">
+          <span>Visible pipeline</span>
+          <strong>{formatCurrency(visibleValue)}</strong>
+          <small>{leads.length} leads in this view</small>
+        </div>
+      </div>
+
+      <div className="lead-stage-strip">
+        {stageCounts.map(({ status, count }) => (
+          <div key={status} className="stage-item">
+            <span className={`stage-dot ${statusTone[status] || ''}`} />
+            <b>{count}</b>
+            <small>{status}</small>
+          </div>
+        ))}
+      </div>
+
+      <div className="lead-toolbar">
+        <div className="list-summary">
+          <div>
+            <span className="eyebrow">Lead Inbox</span>
+            <h2>{leads.length} visible leads</h2>
+          </div>
+          <div className="filter-count">
+            <Filter size={16} />
+            {activeFilters} active filters
+          </div>
+        </div>
+
+        <div className="filters-bar">
+          <div className="searchbox">
+            <Search size={18} />
+            <input
+              placeholder="Search leads, companies, emails"
+              value={filters.search}
+              onChange={(event) => onFilterChange({ ...filters, search: event.target.value })}
+            />
+          </div>
+          <SelectFilter icon={Filter} value={filters.status} onChange={(status) => onFilterChange({ ...filters, status })}>
+            <option value="">All statuses</option>
+            {options.statuses.map((status) => <option key={status}>{status}</option>)}
+          </SelectFilter>
+          <SelectFilter value={filters.source} onChange={(source) => onFilterChange({ ...filters, source })}>
+            <option value="">All sources</option>
+            {options.sources.map((source) => <option key={source}>{source}</option>)}
+          </SelectFilter>
+          <SelectFilter value={filters.assignedSalesperson} onChange={(assignedSalesperson) => onFilterChange({ ...filters, assignedSalesperson })}>
+            <option value="">All owners</option>
+            {salespeople.map((person) => <option key={person}>{person}</option>)}
+          </SelectFilter>
+        </div>
       </div>
 
       <div className="table-wrap">
@@ -503,8 +586,13 @@ function LeadList({
               <tr key={lead._id}>
                 <td>
                   <button className="link-button" onClick={() => onOpen(lead._id)}>
-                    <strong>{lead.leadName}</strong>
-                    <span>{lead.companyName}</span>
+                    <span className="lead-name-row">
+                      <i>{lead.leadName.slice(0, 1).toUpperCase()}</i>
+                      <span>
+                        <strong>{lead.leadName}</strong>
+                        <small>{lead.companyName}</small>
+                      </span>
+                    </span>
                   </button>
                 </td>
                 <td>
@@ -523,7 +611,7 @@ function LeadList({
                   </select>
                 </td>
                 <td>{formatCurrency(lead.dealValue)}</td>
-                <td>{formatDate(lead.updatedAt)}</td>
+                <td><span className="date-chip">{formatDate(lead.updatedAt)}</span></td>
                 <td>
                   <div className="row-actions">
                     <button title="Edit lead" onClick={() => onEdit(lead)}><Pencil size={16} /></button>
@@ -534,7 +622,13 @@ function LeadList({
             ))}
           </tbody>
         </table>
-        {!loading && leads.length === 0 && <div className="empty-state">No leads match the current filters.</div>}
+        {!loading && leads.length === 0 && (
+          <div className="empty-state">
+            <Search size={24} />
+            <strong>No leads match the current filters.</strong>
+            <span>Adjust search terms or clear filters to bring more leads back into view.</span>
+          </div>
+        )}
       </div>
     </section>
   );
@@ -592,6 +686,8 @@ function LeadDetails({ leadId, refreshKey, options, onBack, onEdit, onDelete, on
   if (error) return <div className="empty-state">{error}</div>;
   if (!lead) return <div className="empty-state">Lead not found.</div>;
 
+  const currentStatusIndex = Math.max(0, options.statuses.indexOf(lead.status));
+
   return (
     <section className="detail-view">
       <button className="ghost-button" onClick={onBack}>
@@ -601,11 +697,24 @@ function LeadDetails({ leadId, refreshKey, options, onBack, onEdit, onDelete, on
 
       <div className="detail-grid">
         <article className="detail-main">
-          <div className="detail-header">
+          <div className="detail-hero">
+            <div className="detail-avatar">{lead.leadName.slice(0, 1).toUpperCase()}</div>
             <div>
               <span className={`status-label ${statusTone[lead.status] || ''}`}>{lead.status}</span>
               <h2>{lead.leadName}</h2>
               <p>{lead.companyName}</p>
+            </div>
+            <div className="detail-value-card">
+              <span>Estimated value</span>
+              <strong>{formatCurrency(lead.dealValue)}</strong>
+              <small>Last updated {formatDate(lead.updatedAt)}</small>
+            </div>
+          </div>
+
+          <div className="detail-header">
+            <div>
+              <span className="eyebrow">Pipeline Stage</span>
+              <h3>{lead.status}</h3>
             </div>
             <div className="detail-actions">
               <button className="ghost-button" onClick={() => onEdit(lead)}><Pencil size={16} /> Edit</button>
@@ -613,13 +722,27 @@ function LeadDetails({ leadId, refreshKey, options, onBack, onEdit, onDelete, on
             </div>
           </div>
 
+          <div className="detail-pipeline">
+            {options.statuses.map((status, index) => (
+              <button
+                key={status}
+                className={index <= currentStatusIndex ? 'complete' : ''}
+                onClick={() => changeStatus(status)}
+                type="button"
+              >
+                <span>{index + 1}</span>
+                <small>{status}</small>
+              </button>
+            ))}
+          </div>
+
           <div className="info-grid">
             <Info icon={Mail} label="Email" value={lead.email} />
             <Info icon={Phone} label="Phone" value={lead.phone} />
             <Info icon={Building2} label="Source" value={lead.source} />
             <Info icon={UserRound} label="Assigned" value={lead.assignedSalesperson} />
-            <Info icon={CircleDollarSign} label="Deal Value" value={formatCurrency(lead.dealValue)} />
             <Info icon={NotebookPen} label="Created" value={formatDate(lead.createdAt)} />
+            <Info icon={BarChart3} label="Last Updated" value={formatDate(lead.updatedAt)} />
           </div>
 
           <label className="status-control">
@@ -653,8 +776,11 @@ function LeadDetails({ leadId, refreshKey, options, onBack, onEdit, onDelete, on
           <div className="notes-list">
             {[...(lead.notes || [])].reverse().map((item) => (
               <article key={item._id}>
+                <div className="note-avatar">{item.createdBy.slice(0, 1).toUpperCase()}</div>
+                <div>
                 <p>{item.content}</p>
                 <span>{item.createdBy} · {formatDate(item.createdAt)}</span>
+                </div>
               </article>
             ))}
             {lead.notes?.length === 0 && <p>No notes yet.</p>}
